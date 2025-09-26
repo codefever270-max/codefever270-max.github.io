@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Analytics Dashboard Hub</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        /* Navigation Styles */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-item {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+        
+        .dashboard-page {
+            display: none;
+        }
+        
+        .dashboard-page.active {
+            display: block;
+        }
+        
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .page-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        /* Dashboard Container Styles */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 64px rgba(0,0,0,0.15);
+        }
+        
+        .metric-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .trend-positive { color: #10b981; }
+        .trend-negative { color: #ef4444; }
+        .trend-neutral { color: #8b5cf6; }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        .chart-canvas {
+            position: relative;
+            height: 350px;
+            margin: 1rem 0;
+        }
+        
+        /* Welcome Page Styles */
+        .welcome-container {
+            text-align: center;
+            color: white;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .welcome-description {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+        
+        .dashboard-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .dashboard-link {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .dashboard-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .dashboard-link h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-link p {
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-menu {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .main-content {
+                margin-top: 140px;
+                padding: 1rem;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">Healthcare Analytics Hub</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="showPage('welcome')">Home</li>
+                <li class="nav-item" onclick="showPage('forecasting')">Advanced Forecasting</li>
+                <li class="nav-item" onclick="showPage('respiratory')">Respiratory Analytics</li>
+                <li class="nav-item" onclick="showPage('statistical')">Statistical Analysis</li>
+                <li class="nav-item" onclick="showPage('monitoring')">Performance Monitoring</li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Welcome Page -->
+        <div id="welcome" class="dashboard-page active">
+            <div class="welcome-container">
+                <h1 class="welcome-title">Healthcare Analytics Dashboard Hub</h1>
+                <p class="welcome-description">
+                    Comprehensive healthcare analytics platform providing advanced forecasting, 
+                    statistical analysis, and performance monitoring for NHS Northamptonshire. 
+                    Navigate through different dashboards to explore insights from 2015-2023 data.
+                </p>
+                
+                <div class="dashboard-links">
+                    <div class="dashboard-link" onclick="showPage('forecasting')">
+                        <h3>Advanced Forecasting</h3>
+                        <p>SARIMA, Prophet, and ARIMA models with 6.8% MAPE accuracy for demand prediction</p>
+                    </div>
+                    <div class="dashboard-link" onclick="showPage('respiratory')">
+                        <h3>Respiratory Analytics</h3>
+                        <p>Seasonal patterns, COVID-19 impact, and environmental factor correlations</p>
+                    </div>
+                    <div class="dashboard-link" onclick="showPage('statistical')">
+                        <h3>Statistical Analysis</h3>
+                        <p>Comprehensive monthly trends, correlations, and long-term pattern analysis</p>
+                    </div>
+                    <div class="dashboard-link" onclick="showPage('monitoring')">
+                        <h3>Performance Monitoring</h3>
+                        <p>Real-time KPIs, capacity utilization, and operational efficiency metrics</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Forecasting Dashboard -->
+        <div id="forecasting" class="dashboard-page">
+            <div class="page-header">
+                <h1 class="page-title">Advanced Forecasting Dashboard</h1>
+                <p class="page-subtitle">SARIMA, Prophet & ARIMA Models | Data through December 2023</p>
+            </div>
+            
+            <div class="dashboard-container">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">6.8%</div>
+                        <div class="metric-label">Best Model MAPE (SARIMA)</div>
+                        <div class="metric-trend trend-positive">Superior accuracy achieved</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">1,974</div>
+                        <div class="metric-label">Current Month Forecast</div>
+                        <div class="metric-trend trend-positive">↗ +64.1% vs Previous Month</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">98.5</div>
+                        <div class="metric-label">SARIMA MAE Score</div>
+                        <div class="metric-trend trend-positive">Lowest error rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">0.92</div>
+                        <div class="metric-label">R² Accuracy</div>
+                        <div class="metric-trend trend-positive">Excellent model fit</div>
+                    </div>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Model Performance Comparison</h3>
+                        <div class="chart-canvas">
+                            <canvas id="modelComparisonChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">2024 Forecast Projection</h3>
+                        <div class="chart-canvas">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Respiratory Analytics Dashboard -->
+        <div id="respiratory" class="dashboard-page">
+            <div class="page-header">
+                <h1 class="page-title">Respiratory Admissions Analytics</h1>
+                <p class="page-subtitle">Environmental Factors & Seasonal Analysis (2015-2023)</p>
+            </div>
+            
+            <div class="dashboard-container">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">1,247</div>
+                        <div class="metric-label">Average Monthly Admissions</div>
+                        <div class="metric-trend trend-positive">↗ 58% increase over 9 years</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">-0.85</div>
+                        <div class="metric-label">Temperature Correlation</div>
+                        <div class="metric-trend trend-negative">↓ Strong negative correlation</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">15.0%</div>
+                        <div class="metric-label">Peak Season (January)</div>
+                        <div class="metric-trend trend-neutral">→ Consistent seasonal pattern</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">78.2%</div>
+                        <div class="metric-label">Average Bed Occupancy</div>
+                        <div class="metric-trend trend-positive">↗ Increasing utilization</div>
+                    </div>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Seasonal Pattern Analysis</h3>
+                        <div class="chart-canvas">
+                            <canvas id="seasonalChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Environmental Impact</h3>
+                        <div class="chart-canvas">
+                            <canvas id="environmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistical Analysis Dashboard -->
+        <div id="statistical" class="dashboard-page">
+            <div class="page-header">
+                <h1 class="page-title">Statistical Analysis Dashboard</h1>
+                <p class="page-subtitle">Comprehensive Trends & Correlations (2015-2023)</p>
+            </div>
+            
+            <div class="dashboard-container">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">815K</div>
+                        <div class="metric-label">Population Served (2023)</div>
+                        <div class="metric-trend trend-positive">↗ 14% growth since 2015</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">82</div>
+                        <div class="metric-label">Current AQI Level</div>
+                        <div class="metric-trend trend-negative">↗ Deteriorated from 42</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">812.4</div>
+                        <div class="metric-label">Peak COVID Rate (per 100k)</div>
+                        <div class="metric-trend trend-neutral">January 2022 peak</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">713</div>
+                        <div class="metric-label">Total Bed Capacity</div>
+                        <div class="metric-trend trend-neutral">→ Constant capacity</div>
+                    </div>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Long-term Admission Trends</h3>
+                        <div class="chart-canvas">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">COVID-19 Impact Analysis</h3>
+                        <div class="chart-canvas">
+                            <canvas id="covidChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Monitoring Dashboard -->
+        <div id="monitoring" class="dashboard-page">
+            <div class="page-header">
+                <h1 class="page-title">Performance Monitoring Dashboard</h1>
+                <p class="page-subtitle">Real-time KPIs & Operational Metrics</p>
+            </div>
+            
+            <div class="dashboard-container">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">80%</div>
+                        <div class="metric-label">Current Occupancy Rate</div>
+                        <div class="metric-trend trend-neutral">→ Stable vs Previous Month</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">82</div>
+                        <div class="metric-label">Staffing Level (FTE)</div>
+                        <div class="metric-trend trend-negative">↘ -1 vs Previous Month</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">178.5</div>
+                        <div class="metric-label">COVID-19 Rate (per 100k)</div>
+                        <div class="metric-trend trend-positive">↗ +25.5% vs Previous Month</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">95%</div>
+                        <div class="metric-label">Forecast Accuracy</div>
+                        <div class="metric-trend trend-positive">SARIMA model performance</div>
+                    </div>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Capacity Utilization</h3>
+                        <div class="chart-canvas">
+                            <canvas id="capacityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3 class="chart-title">Performance Metrics</h3>
+                        <div class="chart-canvas">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Sample data for charts
+        const monthlyData = [
+            {year: 2015, month: 'Jan', admissions: 1379, temp: 4, occupancy: 88, covid: 0},
+            {year: 2016, month: 'Jan', admissions: 1503, temp: 5, occupancy: 90, covid: 0},
+            {year: 2017, month: 'Jan', admissions: 1578, temp: 4, occupancy: 91, covid: 0},
+            {year: 2018, month: 'Jan', admissions: 1656, temp: 4, occupancy: 92, covid: 0},
+            {year: 2019, month: 'Jan', admissions: 1735, temp: 4, occupancy: 93, covid: 0},
+            {year: 2020, month: 'Jan', admissions: 1830, temp: 5, occupancy: 94, covid: 0.5},
+            {year: 2021, month: 'Jan', admissions: 1930, temp: 3, occupancy: 90, covid: 342.6},
+            {year: 2022, month: 'Jan', admissions: 2035, temp: 4, occupancy: 88, covid: 812.4},
+            {year: 2023, month: 'Jan', admissions: 2146, temp: 5, occupancy: 87, covid: 198.4}
+        ];
+
+        // Navigation function
+        function showPage(pageId) {
+            // Hide all pages
+            const pages = document.querySelectorAll('.dashboard-page');
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update navigation
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Initialize charts for the selected page
+            setTimeout(() => initializeCharts(pageId), 100);
+        }
+
+        // Chart initialization function
+        function initializeCharts(pageId) {
+            Chart.defaults.font.family = 'Segoe UI';
+            Chart.defaults.color = '#666';
+
+            switch(pageId) {
+                case 'forecasting':
+                    createModelComparisonChart();
+                    createForecastChart();
+                    break;
+                case 'respiratory':
+                    createSeasonalChart();
+                    createEnvironmentChart();
+                    break;
+                case 'statistical':
+                    createTrendChart();
+                    createCovidChart();
+                    break;
+                case 'monitoring':
+                    createCapacityChart();
+                    createPerformanceChart();
+                    break;
+            }
+        }
+
+        // Chart creation functions
+        function createModelComparisonChart() {
+            const ctx = document.getElementById('modelComparisonChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['SARIMA', 'Prophet', 'ARIMA'],
+                    datasets: [{
+                        label: 'MAPE (%)',
+                        data: [6.8, 8.4, 9.2],
+                        backgroundColor: ['#10b981', '#667eea', '#f59e0b'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            title: { display: true, text: 'MAPE (%)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createForecastChart() {
+            const ctx = document.getElementById('forecastChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: '2024 Forecast',
+                        data: [2200, 1650, 1350, 1100, 850, 720],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createSeasonalChart() {
+            const ctx = document.getElementById('seasonalChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Average Admissions',
+                        data: [1800, 1350, 1100, 850, 680, 580, 560, 580, 680, 850, 1100, 1600],
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createEnvironmentChart() {
+            const ctx = document.getElementById('environmentChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Temperature vs Admissions',
+                        data: monthlyData.map(d => ({x: d.temp, y: d.admissions})),
+                        backgroundColor: '#667eea',
+                        borderColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Temperature (°C)' }},
+                        y: { title: { display: true, text: 'Admissions' }}
+                    }
+                }
+            });
+        }
+
+        function createTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(d => d.year),
+                    datasets: [{
+                        label: 'January Admissions',
+                        data: monthlyData.map(d => d.admissions),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createCovidChart() {
+            const ctx = document.getElementById('covidChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(d => d.year),
+                    datasets: [{
+                        label: 'COVID Rate',
+                        data: monthlyData.map(d => d.covid),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createCapacityChart() {
+            const ctx = document.getElementById('capacityChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Occupied', 'Available'],
+                    datasets: [{
+                        data: [80, 20],
+                        backgroundColor: ['#667eea', '#e5e7eb'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performanceChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Forecast Accuracy', 'Bed Utilization', 'Staff Efficiency', 'Patient Satisfaction'],
+                    datasets: [{
+                        data: [95, 80, 88, 92],
+                        backgroundColor: ['#10b981', '#667eea', '#f59e0b', '#8b5cf6'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Percentage (%)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize charts on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Charts will be initialized when pages are first visited
+        });
+    </script>
+</body>
+</html>

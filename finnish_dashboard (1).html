@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanna Marin Leadership Dashboard - Finnish Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #003580 0%, #ffffff 50%, #003580 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(0, 53, 128, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 
+                0 30px 60px rgba(0, 53, 128, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, 
+                rgba(0, 53, 128, 0.9) 0%, 
+                rgba(0, 53, 128, 0.7) 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(45deg, #ffffff, #003580, #ffffff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header .subtitle {
+            font-size: 1.3em;
+            opacity: 0.95;
+            font-weight: 300;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tenure-info {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 25px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 53, 128, 0.2);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: rgba(0, 53, 128, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 53, 128, 0.3);
+            border-radius: 25px;
+            color: #003580;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9em;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(0, 53, 128, 0.8);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 53, 128, 0.3);
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .economic-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .economic-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 53, 128, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .economic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 53, 128, 0.2);
+        }
+
+        .economic-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .economic-card.positive::before {
+            background: linear-gradient(90deg, #00ff87, #60efff);
+        }
+
+        .economic-card.negative::before {
+            background: linear-gradient(90deg, #ff6b6b, #ffa500);
+        }
+
+        .economic-card.neutral::before {
+            background: linear-gradient(90deg, #ffd700, #ffb347);
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .metric-number {
+            font-size: 2.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #003580;
+        }
+
+        .metric-label {
+            color: #003580;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-change {
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .positive-change {
+            background: rgba(0, 255, 135, 0.2);
+            color: #00a86b;
+            border: 1px solid rgba(0, 255, 135, 0.3);
+        }
+
+        .negative-change {
+            background: rgba(255, 107, 107, 0.2);
+            color: #cc5500;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .neutral-change {
+            background: rgba(255, 215, 0, 0.2);
+            color: #cc8800;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .pictographic-section {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .infographic-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .infographic-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .infographic-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 53, 128, 0.15);
+        }
+
+        .infographic-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #003580;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .infographic-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            min-height: 60px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 53, 128, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #003580, #00ff87);
+            border-radius: 10px;
+            position: relative;
+            transition: width 2s ease-in-out;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: progressShine 2s ease-in-out infinite;
+        }
+
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .icon-grid {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-icon {
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .stat-icon .icon {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stat-icon .value {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #003580;
+        }
+
+        .stat-icon .label {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .impact-visualization {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .impact-bar {
+            height: 100px;
+            background: rgba(0, 53, 128, 0.1);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .impact-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(180deg, #00ff87, #003580);
+            border-radius: 8px;
+            transition: height 1.5s ease-in-out;
+        }
+
+        .impact-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.7em;
+            color: #003580;
+            font-weight: 600;
+        }
+
+        .assessment {
+            background: linear-gradient(135deg, 
+                rgba(0, 53, 128, 0.9), 
+                rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(25px);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .assessment h2 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .assessment p {
+            font-size: 1.2em;
+            line-height: 1.7;
+            opacity: 0.95;
+            max-width: 900px;
+            margin: 0 auto 30px;
+        }
+
+        .success-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 53, 128, 0.3);
+        }
+
+        .icon-svg {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-icon {
+            position: absolute;
+            font-size: 2em;
+            color: rgba(0, 53, 128, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #003580;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, #003580, #00ff87);
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .economic-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .navigation {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .nav-btn {
+                padding: 10px 16px;
+                font-size: 0.8em;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .infographic-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-icon" style="top: 10%; left: 5%; animation-delay: 0s;">🇫🇮</div>
+        <div class="floating-icon" style="top: 20%; right: 10%; animation-delay: 1s;">💼</div>
+        <div class="floating-icon" style="top: 60%; left: 8%; animation-delay: 2s;">📈</div>
+        <div class="floating-icon" style="bottom: 20%; right: 5%; animation-delay: 3s;">💻</div>
+        <div class="floating-icon" style="bottom: 10%; left: 15%; animation-delay: 4s;">⚡</div>
+    </div>
+
+    <div class="dashboard">
+        <div class="header">
+            <h1>Sanna Marin</h1>
+            <div class="subtitle">Prime Minister of Finland • Economic & Leadership Impact Analysis</div>
+            <div class="tenure-info">
+                <strong>Tenure:</strong> December 10, 2019 - June 20, 2023 | <strong>Age at appointment:</strong> 34 (Youngest PM in Finnish history)
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-btn active" onclick="showPage('overview')">📊 Overview</button>
+            <button class="nav-btn" onclick="showPage('economy')">💰 Economy</button>
+            <button class="nav-btn" onclick="showPage('technology')">💻 Technology</button>
+            <button class="nav-btn" onclick="showPage('defense')">🛡️ Defense</button>
+            <button class="nav-btn" onclick="showPage('achievements')">🏆 Achievements</button>
+        </div>
+
+        <div id="overview" class="page active">
+            <div class="economic-overview">
+                <div class="economic-card positive">
+                    <span class="card-icon">💰</span>
+                    <div class="metric-number">€273B</div>
+                    <div class="metric-label">GDP 2023</div>
+                    <div class="metric-change positive-change">+€7.2B from 2022</div>
+                </div>
+                <div class="economic-card negative">
+                    <span class="card-icon">👷‍♂️</span>
+                    <div class="metric-number">7.15%</div>
+                    <div class="metric-label">Unemployment Rate 2023</div>
+                    <div class="metric-change negative-change">+0.43% from 2022</div>
+                </div>
+                <div class="economic-card positive">
+                    <span class="card-icon">👤</span>
+                    <div class="metric-number">€53,750</div>
+                    <div class="metric-label">GDP Per Capita 2023</div>
+                    <div class="metric-change positive-change">136% of EU average</div>
+                </div>
+                <div class="economic-card positive">
+                    <span class="card-icon">🏆</span>
+                    <div class="metric-number">8th</div>
+                    <div class="metric-label">IMD Competitiveness</div>
+                    <div class="metric-change positive-change">Top 10 globally</div>
+                </div>
+                <div class="economic-card positive">
+                    <span class="card-icon">💻</span>
+                    <div class="metric-number">#1</div>
+                    <div class="metric-label">EU Digital Leader</div>
+                    <div class="metric-change positive-change">Most digitalized in Europe</div>
+                </div>
+                <div class="economic-card positive">
+                    <span class="card-icon">🛡️</span>
+                    <div class="metric-number">2.5%</div>
+                    <div class="metric-label">Defense Spending/GDP</div>
+                    <div class="metric-change positive-change">+1% from 2019</div>
+                </div>
+            </div>
+
+            <div class="assessment">
+                <h2>Overall Assessment</h2>
+                <p>
+                    Marin's economic leadership demonstrates <strong>strong crisis management</strong> with a 70% positive impact score. 
+                    Despite global challenges, Finland maintained competitiveness rankings, grew GDP by €7.2B, and 
+                    achieved historic defense sector growth. Her digital innovation policies preserved Finland's EU leadership, 
+                    though unemployment trends and structural issues remained challenging.
+                </p>
+                <div class="success-indicator">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Economic Impact: High Performance Under Crisis
+                </div>
+            </div>
+        </div>
+
+        <div id="economy" class="page">
+            <div class="pictographic-section">
+                <h2 class="section-title">📈 Economic Impact Visualized</h2>
+                
+                <div class="infographic-container">
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🦠</span> COVID-19 Economic Crisis Management
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div style="color: #003580; text-align: center; font-weight: 600;">
+                            85% Success Rate • €4.5B Support Package
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>📊</span> GDP Development
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="impact-visualization">
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 60%"></div>
+                                    <div class="impact-label">2019</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 40%"></div>
+                                    <div class="impact-label">2020</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 70%"></div>
+                                    <div class="impact-label">2021</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 80%"></div>
+                                    <div class="impact-label">2022</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 85%"></div>
+                                    <div class="impact-label">2023</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #003580; text-align: center; font-weight: 600;">
+                            Steady growth post-pandemic
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>👥</span> Employment Situation
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="icon-grid">
+                                <div class="stat-icon">
+                                    <span class="icon">👔</span>
+                                    <div class="value">92.85%</div>
+                                    <div class="label">Employed</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">❌</span>
+                                    <div class="value">7.15%</div>
+                                    <div class="label">Unemployed</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #cc5500; text-align: center; font-weight: 600;">
+                            Challenge: Rising unemployment
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="technology" class="page">
+            <div class="pictographic-section">
+                <h2 class="section-title">💻 Technology & Innovation</h2>
+                
+                <div class="infographic-container">
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🏆</span> EU Digital Economy Index
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="icon-grid">
+                                <div class="stat-icon">
+                                    <span class="icon">🇫🇮</span>
+                                    <div class="value">#1</div>
+                                    <div class="label">Finland</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🇩🇰</span>
+                                    <div class="value">#2</div>
+                                    <div class="label">Denmark</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🇳🇱</span>
+                                    <div class="value">#3</div>
+                                    <div class="label">Netherlands</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            Europe's most digitalized country
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>💰</span> ICT Investments
+                        </div>
+                        <div class="infographic-visual">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                                <div style="font-size: 3em;">💼</div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2em; font-weight: bold; color: #003580;">€130M</div>
+                                    <div style="color: #666;">Digital Progress Programme</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #003580; text-align: center; font-weight: 600;">
+                            Major digital investment initiative
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🤖</span> AI & Innovation
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="icon-grid">
+                                <div class="stat-icon">
+                                    <span class="icon">🤖</span>
+                                    <div class="value">AuroraAI</div>
+                                    <div class="label">National AI</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">⚛️</span>
+                                    <div class="value">VTT</div>
+                                    <div class="label">Quantum</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🚀</span>
+                                    <div class="value">+40%</div>
+                                    <div class="label">Startup funding</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #003580; text-align: center; font-weight: 600;">
+                            Innovation ecosystem thriving
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🌐</span> Network Infrastructure
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 95%"></div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            95% Gigabit network coverage
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="defense" class="page">
+            <div class="pictographic-section">
+                <h2 class="section-title">🛡️ Defense & Security</h2>
+                
+                <div class="infographic-container">
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🏛️</span> NATO Membership
+                        </div>
+                        <div class="infographic-visual">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 30px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 3em;">🇫🇮</div>
+                                    <div style="font-size: 1.2em; margin: 10px 0;">➡️</div>
+                                    <div style="font-size: 2em;">🛡️</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.5em; font-weight: bold; color: #003580;">2023</div>
+                                    <div style="color: #666;">NATO Member</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            Historic security policy transformation
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>💰</span> Defense Spending
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="impact-visualization">
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 35%"></div>
+                                    <div class="impact-label">2019<br>1.4%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 50%"></div>
+                                    <div class="impact-label">2020<br>1.7%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 65%"></div>
+                                    <div class="impact-label">2021<br>1.9%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 80%"></div>
+                                    <div class="impact-label">2022<br>2.0%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 100%"></div>
+                                    <div class="impact-label">2023<br>2.5%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            GDP share more than doubled
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>👷‍♂️</span> Defense Industry Jobs
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="icon-grid">
+                                <div class="stat-icon">
+                                    <span class="icon">🏭</span>
+                                    <div class="value">+15,000</div>
+                                    <div class="label">New jobs</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🔧</span>
+                                    <div class="value">+8,500</div>
+                                    <div class="label">Manufacturing</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🧑‍💼</span>
+                                    <div class="value">+6,500</div>
+                                    <div class="label">Services</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            Significant employment impact
+                        </div>
+                    </div>
+                </div>: 600;">
+                            Historiallinen turvallisuuspolitiikan muutos
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>💰</span> Puolustusmenot
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="impact-visualization">
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 35%"></div>
+                                    <div class="impact-label">2019<br>1.4%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 50%"></div>
+                                    <div class="impact-label">2020<br>1.7%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 65%"></div>
+                                    <div class="impact-label">2021<br>1.9%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 80%"></div>
+                                    <div class="impact-label">2022<br>2.0%</div>
+                                </div>
+                                <div class="impact-bar">
+                                    <div class="impact-fill" style="height: 100%"></div>
+                                    <div class="impact-label">2023<br>2.5%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            BKT-osuus yli kaksinkertaistunut
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>👷‍♂️</span> Työpaikat Puolustusteollisuudessa
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="icon-grid">
+                                <div class="stat-icon">
+                                    <span class="icon">🏭</span>
+                                    <div class="value">+15,000</div>
+                                    <div class="label">Uusia työpaikkoja</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🔧</span>
+                                    <div class="value">+8,500</div>
+                                    <div class="label">Teollisuus</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">🧑‍💼</span>
+                                    <div class="value">+6,500</div>
+                                    <div class="label">Palvelut</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            Merkittävä työllistämisvaikutus
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="achievements" class="page">
+            <div class="pictographic-section">
+                <h2 class="section-title">🏆 Keskeiset Saavutukset</h2>
+                
+                <div class="infographic-container">
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🦠</span> Pandemian Taloudellinen Selviytyminen
+                        </div>
+                        <div class="infographic-visual">
+                            <div style="display: flex; justify-content: space-around; align-items: center;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2.5em; color: #cc5500;">📉</div>
+                                    <div style="font-size: 1.2em; font-weight: bold; color: #cc5500;">-2.8%</div>
+                                    <div style="font-size: 0.8em; color: #666;">BKT 2020</div>
+                                </div>
+                                <div style="font-size: 2em;">➡️</div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2.5em; color: #00a86b;">📈</div>
+                                    <div style="font-size: 1.2em; font-weight: bold; color: #00a86b;">+3.2%</div>
+                                    <div style="font-size: 0.8em; color: #666;">BKT 2021-2023</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            Nopea toipuminen globaalista kriisistä
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🌟</span> Kansainvälinen Kilpailukyky
+                        </div>
+                        <div class="infographic-visual">
+                            <div class="icon-grid">
+                                <div class="stat-icon">
+                                    <span class="icon">🏆</span>
+                                    <div class="value">8.</div>
+                                    <div class="label">IMD Ranking</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">💻</span>
+                                    <div class="value">#1</div>
+                                    <div class="label">EU Digital</div>
+                                </div>
+                                <div class="stat-icon">
+                                    <span class="icon">💰</span>
+                                    <div class="value">136%</div>
+                                    <div class="label">EU BKT/hlö</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #00a86b; text-align: center; font-weight: 600;">
+                            Säilytetty maailmanluokan asema
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>🚀</span> Innovaatio-ekosysteemi
+                        </div>
+                        <div class="infographic-visual">
+                            <div style="display: flex; justify-content: space-around; align-items: center;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2em;">💡</div>
+                                    <div style="font-weight: bold; color: #003580;">+40%</div>
+                                    <div style="font-size: 0.8em;">Startup-rahoitus</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2em;">🤖</div>
+                                    <div style="font-weight: bold; color: #003580;">AuroraAI</div>
+                                    <div style="font-size: 0.8em;">Kansallinen AI</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2em;">⚛️</div>
+                                    <div style="font-weight: bold; color: #003580;">Quantum</div>
+                                    <div style="font-size: 0.8em;">Tutkimusohjelma</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #003580; text-align: center; font-weight: 600;">
+                            Teknologisen kehityksen edelläkävijä
+                        </div>
+                    </div>
+
+                    <div class="infographic-card">
+                        <div class="infographic-title">
+                            <span>📊</span> Kokonaisvaikutusanalyysi
+                        </div>
+                        <div class="infographic-visual">
+                            <div style="position: relative; width: 150px; height: 150px; margin: 0 auto;">
+                                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(0,53,128,0.1)" stroke-width="8"/>
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#003580" stroke-width="8" 
+                                            stroke-dasharray="200" stroke-dashoffset="60" 
+                                            style="transition: stroke-dashoffset 2s ease-in-out;"/>
+                                </svg>
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                                           font-size: 1.8em; font-weight: bold; color: #003580;">70%</div>
+                            </div>
+                        </div>
+                        <div style="color: #003580; text-align: center; font-weight: 600;">
+                            Vahva positiivinen vaikutus
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Remove active class from all nav buttons
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Animate progress bars and charts when page loads
+            setTimeout(() => {
+                animateProgressBars();
+                animateCharts();
+            }, 300);
+        }
+        
+        function animateProgressBars() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        }
+        
+        function animateCharts() {
+            const impactFills = document.querySelectorAll('.impact-fill');
+            impactFills.forEach((fill, index) => {
+                const height = fill.style.height;
+                fill.style.height = '0%';
+                setTimeout(() => {
+                    fill.style.height = height;
+                }, 200 + (index * 100));
+            });
+        }
+        
+        // Initialize animations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                animateProgressBars();
+                animateCharts();
+            }, 500);
+        });
+        
+        // Add hover effects to cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.economic-card, .infographic-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

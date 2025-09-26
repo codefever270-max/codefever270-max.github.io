@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeFi Yield Analytics - Multi-Protocol Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8eaed;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .wallet-connection {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .connection-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            transition: all 0.3s ease;
+        }
+
+        .connection-dot.connected {
+            background: #00d4aa;
+            box-shadow: 0 0 15px rgba(0, 212, 170, 0.5);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #b8c5d6;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00d4aa;
+            transition: all 0.3s ease;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .positive { color: #00d4aa; }
+        .negative { color: #ff6b6b; }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: #b8c5d6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e8eaed;
+        }
+
+        .control-btn.active {
+            background: linear-gradient(135deg, #00d4aa, #667eea);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 212, 170, 0.3);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .chart-container:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #e8eaed;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .protocol-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .protocol-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .protocol-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .protocol-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .protocol-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e8eaed;
+        }
+
+        .protocol-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .protocol-metric {
+            text-align: center;
+        }
+
+        .protocol-metric-label {
+            font-size: 0.8rem;
+            color: #b8c5d6;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .protocol-metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #00d4aa;
+        }
+
+        .live-stats {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .live-stats-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #e8eaed;
+            text-align: center;
+        }
+
+        .live-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .live-stat {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .live-stat-label {
+            font-size: 0.8rem;
+            color: #b8c5d6;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .live-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00d4aa;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .chart-wrapper {
+                height: 250px;
+            }
+        }
+
+        /* Loading animation */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 170, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 170, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>DeFi Yield Analytics</h1>
+            <div class="wallet-connection">
+                <div class="connection-status" onclick="connectWallet()">
+                    <div class="connection-dot" id="connectionDot"></div>
+                    <span id="connectionStatus">Connect Wallet</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portfolio Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">Total Value Locked</div>
+                <div class="stat-value" id="totalValueLocked">$2.4M</div>
+                <div class="stat-change positive">+12.3% (24h)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Average APY</div>
+                <div class="stat-value" id="avgAPY">18.7%</div>
+                <div class="stat-change positive">+2.1% (7d)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Active Protocols</div>
+                <div class="stat-value" id="activeProtocols">12</div>
+                <div class="stat-change positive">+2 (30d)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Daily Rewards</div>
+                <div class="stat-value" id="dailyRewards">$847</div>
+                <div class="stat-change positive">+5.8% (24h)</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <button class="control-btn active" onclick="setTimeframe('1d')">1D</button>
+                <button class="control-btn" onclick="setTimeframe('7d')">7D</button>
+                <button class="control-btn" onclick="setTimeframe('30d')">30D</button>
+                <button class="control-btn" onclick="setTimeframe('1y')">1Y</button>
+            </div>
+            <div class="control-group">
+                <button class="control-btn active" onclick="setProtocolView('yield')">Yield</button>
+                <button class="control-btn" onclick="setProtocolView('tvl')">TVL</button>
+                <button class="control-btn" onclick="setProtocolView('risk')">Risk</button>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">Portfolio Performance</div>
+                <div class="chart-wrapper">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">APY Comparison</div>
+                <div class="chart-wrapper">
+                    <canvas id="yieldComparisonChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Portfolio Allocation</div>
+                <div class="chart-wrapper">
+                    <canvas id="allocationChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Risk Distribution</div>
+                <div class="chart-wrapper">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Protocol Cards -->
+        <div class="protocol-grid">
+            <div class="protocol-card">
+                <div class="protocol-header">
+                    <div class="protocol-logo" style="background: linear-gradient(135deg, #667eea, #764ba2);">U</div>
+                    <div class="protocol-name">Uniswap V3</div>
+                </div>
+                <div class="protocol-metrics">
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">APY</div>
+                        <div class="protocol-metric-value">24.3%</div>
+                    </div>
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">Staked</div>
+                        <div class="protocol-metric-value">$456k</div>
+                    </div>
+                </div>
+            </div>
+            <div class="protocol-card">
+                <div class="protocol-header">
+                    <div class="protocol-logo" style="background: linear-gradient(135deg, #ffd93d, #f9ca24);">P</div>
+                    <div class="protocol-name">PancakeSwap</div>
+                </div>
+                <div class="protocol-metrics">
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">APY</div>
+                        <div class="protocol-metric-value">31.8%</div>
+                    </div>
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">Staked</div>
+                        <div class="protocol-metric-value">$298k</div>
+                    </div>
+                </div>
+            </div>
+            <div class="protocol-card">
+                <div class="protocol-header">
+                    <div class="protocol-logo" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">S</div>
+                    <div class="protocol-name">SushiSwap</div>
+                </div>
+                <div class="protocol-metrics">
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">APY</div>
+                        <div class="protocol-metric-value">47.2%</div>
+                    </div>
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">Staked</div>
+                        <div class="protocol-metric-value">$189k</div>
+                    </div>
+                </div>
+            </div>
+            <div class="protocol-card">
+                <div class="protocol-header">
+                    <div class="protocol-logo" style="background: linear-gradient(135deg, #00a8ff, #0097e6);">C</div>
+                    <div class="protocol-name">Curve Finance</div>
+                </div>
+                <div class="protocol-metrics">
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">APY</div>
+                        <div class="protocol-metric-value">15.6%</div>
+                    </div>
+                    <div class="protocol-metric">
+                        <div class="protocol-metric-label">Staked</div>
+                        <div class="protocol-metric-value">$672k</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Stats -->
+        <div class="live-stats">
+            <div class="live-stats-title">Live Market Data</div>
+            <div class="live-stats-grid">
+                <div class="live-stat">
+                    <div class="live-stat-label">Gas Price</div>
+                    <div class="live-stat-value" id="gasPrice">23 gwei</div>
+                </div>
+                <div class="live-stat">
+                    <div class="live-stat-label">ETH Price</div>
+                    <div class="live-stat-value" id="ethPrice">$2,347</div>
+                </div>
+                <div class="live-stat">
+                    <div class="live-stat-label">Fear & Greed</div>
+                    <div class="live-stat-value" id="fearGreed">72 (Greed)</div>
+                </div>
+                <div class="live-stat">
+                    <div class="live-stat-label">TVL Growth</div>
+                    <div class="live-stat-value" id="tvlGrowth">+5.2%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample DeFi data
+        const defiData = {
+            timeLabels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            portfolioValue: [180000, 195000, 168000, 210000, 245000, 225000, 268000, 290000, 275000, 315000, 342000, 385000],
+            protocols: {
+                uniswap: [22.1, 23.4, 21.8, 24.7, 26.2, 25.1, 28.3, 27.9, 24.8, 26.5, 25.7, 24.3],
+                pancakeswap: [28.7, 31.2, 29.5, 33.1, 35.8, 32.4, 36.7, 34.2, 31.9, 33.5, 32.1, 31.8],
+                sushiswap: [42.3, 45.7, 41.2, 48.9, 52.1, 46.8, 51.3, 48.7, 44.5, 49.2, 47.8, 47.2],
+                curve: [12.8, 14.2, 13.5, 15.7, 16.9, 15.3, 17.2, 16.8, 14.9, 16.1, 15.8, 15.6]
+            },
+            allocation: {
+                uniswap: 456000,
+                pancakeswap: 298000,
+                sushiswap: 189000,
+                curve: 672000
+            }
+        };
+        
+        // Chart configurations
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#b8c5d6',
+                        font: {
+                            size: 13
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#b8c5d6'
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#b8c5d6'
+                    }
+                }
+            }
+        };
+        
+        // Chart instances
+        let performanceChart, yieldChart, allocationChart, riskChart;
+        
+        // Initialize all charts
+        function initializeCharts() {
+            performanceChart = createPerformanceChart();
+            yieldChart = createYieldChart();
+            allocationChart = createAllocationChart();
+            riskChart = createRiskChart();
+        }
+        
+        // Portfolio Performance Chart
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: defiData.timeLabels,
+                    datasets: [{
+                        label: 'Portfolio Value ($)',
+                        data: defiData.portfolioValue,
+                        borderColor: '#00d4aa',
+                        backgroundColor: 'rgba(0, 212, 170, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#00d4aa',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Portfolio Value: $${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // APY Comparison Chart
+        function createYieldChart() {
+            const ctx = document.getElementById('yieldComparisonChart').getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: defiData.timeLabels,
+                    datasets: [{
+                        label: 'Uniswap V3',
+                        data: defiData.protocols.uniswap,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4
+                    }, {
+                        label: 'PancakeSwap',
+                        data: defiData.protocols.pancakeswap,
+                        borderColor: '#ffd93d',
+                        backgroundColor: 'rgba(255, 217, 61, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4
+                    }, {
+                        label: 'SushiSwap',
+                        data: defiData.protocols.sushiswap,
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4
+                    }, {
+                        label: 'Curve',
+                        data: defiData.protocols.curve,
+                        borderColor: '#00a8ff',
+                        backgroundColor: 'rgba(0, 168, 255, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        ...chartOptions.scales,
+                        y: {
+                            ...chartOptions.scales.y,
+                            ticks: {
+                                ...chartOptions.scales.y.ticks,
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Portfolio Allocation Chart
+        function createAllocationChart() {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Curve', 'Uniswap V3', 'PancakeSwap', 'SushiSwap'],
+                    datasets: [{
+                        data: Object.values(defiData.allocation),
+                        backgroundColor: [
+                            'rgba(0, 168, 255, 0.8)',
+                            'rgba(102, 126, 234, 0.8)',
+                            'rgba(255, 217, 61, 0.8)',
+                            'rgba(255, 107, 107, 0.8)'
+                        ],
+                        borderColor: [
+                            '#00a8ff',
+                            '#667eea',
+                            '#ffd93d',
+                            '#ff6b6b'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#b8c5d6',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Risk Distribution Chart
+        function createRiskChart() {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            return new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+                    datasets: [{
+                        data: [55, 30, 15],
+                        backgroundColor: [
+                            'rgba(0, 212, 170, 0.8)',
+                            'rgba(255, 217, 61, 0.8)',
+                            'rgba(255, 107, 107, 0.8)'
+                        ],
+                        borderColor: [
+                            '#00d4aa',
+                            '#ffd93d',
+                            '#ff6b6b'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#b8c5d6',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Timeframe selection function
+        function setTimeframe(timeframe) {
+            // Update active button
+            document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // In a real app, this would fetch new data based on timeframe
+            console.log(`Timeframe set to: ${timeframe}`);
+            
+            // Simulate data update
+            updateChartData(timeframe);
+        }
+        
+        // Protocol view selection function
+        function setProtocolView(view) {
+            // Update active button
+            document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            console.log(`Protocol view set to: ${view}`);
+            
+            // Update protocol cards based on view
+            updateProtocolView(view);
+        }
+        
+        // Update protocol cards based on selected view
+        function updateProtocolView(view) {
+            const protocolCards = document.querySelectorAll('.protocol-card');
+            
+            protocolCards.forEach(card => {
+                const metrics = card.querySelectorAll('.protocol-metric-value');
+                
+                if (view === 'yield') {
+                    // Show APY data
+                    metrics[0].textContent = getRandomAPY() + '%';
+                    metrics[1].textContent = '$' + Math.floor(Math.random() * 500000 + 100000).toLocaleString();
